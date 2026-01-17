@@ -6,8 +6,6 @@ import ij.plugin.PlugIn
 
 import java.awt.event.{ ActionEvent, KeyAdapter, KeyEvent }
 
-import scala.math.{ atan2, toDegrees }
-
 class StackTransform extends PlugIn {
   override def run(arg: String): Unit = {
     if (WindowManager.getImageCount() == 0)
@@ -78,8 +76,8 @@ class StackTransform extends PlugIn {
         }
 
         line.foreach { l =>
+          val angle = l.getAngle()
           val bounds = l.getBounds()
-          val angle = toDegrees(atan2(-bounds.height, bounds.width))
           val cx = bounds.x + bounds.width / 2
           val cy = bounds.y + bounds.height / 2
 
