@@ -16,26 +16,29 @@ class StackTransform extends PlugIn {
     val dialog = new GenericDialog("Stack Transform")
 
     dialog.addImageChoice("Select image/stack to align:", null)
+    dialog.addImageChoice("Select image/stack for second channel:", null)
+    dialog.addImageChoice("Select image/stack for third channel:", null)
     dialog.showDialog()
 
     if (dialog.wasOKed) {
-      val image = dialog.getNextImage()
-      val stack = image.getImageStack()
-      val slices = stack.size()
+      val images = Array(dialog.getNextImage(), dialog.getNextImage(), dialog.getNextImage())
+      val stacks = images.map(_.getImageStack())
+      val slices = stacks(0).size()
 
-      val width = image.getWidth()
-      val height = image.getHeight()
+      if (stacks(1).size() != slices || stacks(2).size() != slices)
+        return IJ.error("Stack Transform", "The selected stacks do not have the same number of slices.")
+
+      val width = images(0).getWidth()
+      val height = images(0).getHeight()
 
       var refAngle = 0.0
       var refX = 0
       var refY = 0
 
-      val canvas = image.getWindow().getCanvas()
+      val canvas = images(0).getWindow().getCanvas()
 
       for (i <- 1 to slices) {
-        image.setSlice(i)
-
-        val processor = stack.getProcessor(i)
+        images.foreach(_.setSlice(i))
 
         var line: Option[Line] = None
 
@@ -62,7 +65,7 @@ class StackTransform extends PlugIn {
           canvas.removeKeyListener(keyListener)
 
           if (nextDialog.wasOKed) {
-            image.getRoi() match {
+            images(0).getRoi() match {
               case l: Line =>
                 line = Option(l)
 
@@ -85,15 +88,17 @@ class StackTransform extends PlugIn {
             refX = cx
             refY = cy
           } else {
-            processor.translate(width / 2 - cx, height / 2 - cy)
-            processor.rotate(angle - refAngle)
-            processor.translate(refX - width / 2, refY - height / 2)
+            stacks.map(_.getProcessor(i)).foreach { processor =>
+              processor.translate(width / 2 - cx, height / 2 - cy)
+              processor.rotate(angle - refAngle)
+              processor.translate(refX - width / 2, refY - height / 2)
+            }
           }
         }
       }
 
-      image.resetRoi()
-      image.updateAndDraw()
+      images(0).resetRoi()
+      images.foreach(_.updateAndDraw())
     }
   }
 }
