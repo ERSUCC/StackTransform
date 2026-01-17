@@ -4,6 +4,8 @@ import ij.{ IJ, Macro, WindowManager }
 import ij.gui.{ GenericDialog, Line, NonBlockingGenericDialog }
 import ij.plugin.PlugIn
 
+import java.awt.event.{ ActionEvent, KeyAdapter, KeyEvent }
+
 class StackTransform extends PlugIn {
   override def run(arg: String): Unit = {
     if (WindowManager.getImageCount() == 0)
@@ -26,6 +28,8 @@ class StackTransform extends PlugIn {
       var refX = 0
       var refY = 0
 
+      val canvas = image.getWindow().getCanvas()
+
       for (i <- 1 to slices) {
         image.setSlice(i)
 
@@ -38,7 +42,22 @@ class StackTransform extends PlugIn {
 
           nextDialog.addMessage("Draw a line on the current slice.")
           nextDialog.setAlwaysOnTop(true)
+
+          val keyListener = new KeyAdapter {
+            override def keyPressed(e: KeyEvent): Unit = {
+              if (e.getKeyCode == KeyEvent.VK_ENTER) {
+                val button = nextDialog.getButtons()(0)
+
+                button.dispatchEvent(new ActionEvent(button, ActionEvent.ACTION_PERFORMED, button.getName))
+              }
+            }
+          }
+
+          canvas.addKeyListener(keyListener)
+
           nextDialog.showDialog()
+
+          canvas.removeKeyListener(keyListener)
 
           if (nextDialog.wasOKed) {
             image.getRoi() match {
