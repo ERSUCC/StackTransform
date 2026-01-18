@@ -3,6 +3,7 @@ package org.ersucc.stacktransform
 import ij.{ IJ, Macro, WindowManager }
 import ij.gui.{ GenericDialog, Line, NonBlockingGenericDialog }
 import ij.plugin.PlugIn
+import ij.process.Blitter
 
 import java.awt.event.{ ActionEvent, KeyAdapter, KeyEvent }
 
@@ -91,9 +92,14 @@ class StackTransform extends PlugIn {
             refY = cy
           } else {
             stacks.map(_.getProcessor(i)).foreach { processor =>
-              processor.translate(width / 2 - cx, height / 2 - cy)
-              processor.rotate(angle - refAngle)
-              processor.translate(refX - width / 2, refY - height / 2)
+              val buffer = processor.createProcessor(width * 2, height * 2)
+
+              buffer.copyBits(processor, width / 2, height / 2, Blitter.COPY)
+              buffer.translate(width / 2 - cx, height / 2 - cy)
+              buffer.rotate(angle - refAngle)
+              buffer.translate(refX - width / 2, refY - height / 2)
+
+              processor.copyBits(buffer, -width / 2, -height / 2, Blitter.COPY)
             }
           }
         }
