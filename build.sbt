@@ -4,7 +4,7 @@ import sbt.{ InputKey, IO }
 import sbt.complete.DefaultParsers.{ Space, StringBasic }
 
 name := "Stack Transform"
-version := "0.2.0"
+version := "0.3.0"
 organization := "org.ersucc"
 
 scalaVersion := "3.7.0"
