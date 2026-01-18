@@ -13,17 +13,21 @@ class StackTransform extends PlugIn {
 
     val dialog = new GenericDialog("Stack Transform")
 
-    dialog.addImageChoice("Select image/stack to align:", null)
-    dialog.addImageChoice("Select image/stack for second channel:", null)
-    dialog.addImageChoice("Select image/stack for third channel:", null)
+    dialog.addImageChoice("Select stack to align:", null)
+    dialog.addChoice("Select stack for second channel:", "--" +: WindowManager.getImageTitles(), null)
+    dialog.addChoice("Select stack for third channel:", "--" +: WindowManager.getImageTitles(), null)
     dialog.showDialog()
 
     if (dialog.wasOKed) {
-      val images = Array(dialog.getNextImage(), dialog.getNextImage(), dialog.getNextImage())
+      val images = Array(dialog.getNextChoice(), dialog.getNextChoice(), dialog.getNextChoice()).distinct.collect {
+        case name if name != "--" =>
+          WindowManager.getImage(name)
+      }
+
       val stacks = images.map(_.getImageStack())
       val slices = stacks(0).size()
 
-      if (stacks(1).size() != slices || stacks(2).size() != slices)
+      if (stacks.tail.exists(_.size() != slices))
         return IJ.error("Stack Transform", "The selected stacks do not have the same number of slices.")
 
       val width = images(0).getWidth()
@@ -95,7 +99,6 @@ class StackTransform extends PlugIn {
         }
       }
 
-      images(0).resetRoi()
       images.foreach(_.updateAndDraw())
     }
   }
